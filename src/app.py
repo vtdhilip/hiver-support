@@ -5,17 +5,17 @@ from agent import AmazonSupportAgent
 app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(BASE_DIR, '..', 'data', 'processed', 'amazon_conversations.csv')
+# Check for packaged 1.2MB knowledge base first, then fallback to processed
+KB_PATH = os.path.join(BASE_DIR, '..', 'data', 'knowledge_base.csv')
+if not os.path.exists(KB_PATH):
+    KB_PATH = os.path.join(BASE_DIR, '..', 'data', 'processed', 'amazon_conversations.csv')
 
+print(f"Booting up AI Server with knowledge base: {KB_PATH}")
 agent = None
-init_error = None
-
-print("Booting up the AI Server...")
 try:
-    agent = AmazonSupportAgent(DATA_PATH)
+    agent = AmazonSupportAgent(KB_PATH)
 except Exception as e:
-    init_error = str(e)
-    print(f"\n⚠️  Notice on startup: {init_error}\n")
+    print(f"Notice on startup: {e}")
 
 @app.route('/')
 def home():
@@ -23,11 +23,10 @@ def home():
 
 @app.route('/api/process', methods=['POST'])
 def process_tweet():
-    global agent, init_error
+    global agent
     if agent is None:
         try:
-            agent = AmazonSupportAgent(DATA_PATH)
-            init_error = None
+            agent = AmazonSupportAgent(KB_PATH)
         except Exception as e:
             return jsonify({"error": f"Agent could not initialize: {e}"}), 500
 
@@ -42,4 +41,5 @@ def process_tweet():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
