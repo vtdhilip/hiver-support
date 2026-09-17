@@ -133,7 +133,7 @@ To validate the reliability of the LLM-as-a-Judge rubric:
 
 ---
 
-## ⚠️ "What is Misleading About My Headline Number?" (Mandatory Section)
+## ⚠️ What is Misleading About My Headline Number?
 
 Our headline **88% Intent Accuracy** and **94% Escalation Recall** may look impressive, but:
 1. **Class Distribution Skew:** Queries regarding delivery delays dominate ~50% of Twitter volume. A naive model predicting `Shipping_Delivery_Issues` on ambiguous tweets gets an artificially high accuracy score.

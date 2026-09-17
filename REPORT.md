@@ -95,7 +95,7 @@ To prove the judge's trustworthiness:
 
 ---
 
-## 6. "What is Misleading About My Headline Number?"
+## 6. What is Misleading About My Headline Number?
 
 Our headline metrics—**88.2% Accuracy** and **94.1% Escalation Recall**—must be interpreted with engineering skepticism:
 1. **Class Imbalance Distorts Accuracy:** Delivery complaints constitute > 50% of Twitter volume. A naive classifier predicting `Shipping_Delivery_Issues` on all ambiguous tweets achieves 50% baseline accuracy by default.
