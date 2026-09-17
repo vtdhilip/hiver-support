@@ -1,0 +1,12 @@
+# Secrets
+.env
+
+# Environment & Cache
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Large datasets (exceeds GitHub 100MB limit)
+data/raw/
+data/processed/

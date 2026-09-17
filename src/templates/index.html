@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon AI Support Agent</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; color: #1f2937; max-width: 800px; margin: 40px auto; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        textarea { width: 100%; height: 100px; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px; margin-bottom: 15px; box-sizing: border-box; resize: vertical; }
+        button { background-color: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 15px; cursor: pointer; font-weight: 600; }
+        button:hover { background-color: #1d4ed8; }
+        .hidden { display: none; }
+        .badge { display: inline-block; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 14px; margin-bottom: 15px;}
+        .escalate-true { background-color: #fee2e2; color: #991b1b; border: 1px solid #f87171; }
+        .escalate-false { background-color: #dcfce7; color: #166534; border: 1px solid #4ade80; }
+        .intent { color: #374151; font-weight: 600; margin-bottom: 10px; }
+        .reply-box { background-color: #f8fafc; padding: 15px; border-left: 4px solid #2563eb; border-radius: 4px; font-style: italic; white-space: pre-wrap; }
+        #loading { color: #6b7280; font-style: italic; margin-top: 10px;}
+        .error-card { background-color: #fef2f2; border: 1px solid #f87171; color: #b91c1c; padding: 15px; border-radius: 8px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <h1>📦 Amazon AI Support Agent</h1>
+    <p style="color: #6b7280; margin-top: -10px;">Powered by Google Gemini 1.5 Flash + RAG Grounding</p>
+
+    <div class="card">
+        <label for="tweet"><strong>Simulate an Incoming Customer Tweet:</strong></label>
+        <textarea id="tweet" placeholder="Example: My package was marked delivered 2 days ago but nothing arrived at my door! Order #12345."></textarea>
+        <button onclick="processTweet()">Analyze & Draft Reply</button>
+        <div id="loading" class="hidden">🤖 Retrieving historical resolutions & querying Gemini...</div>
+        <div id="error-box" class="error-card hidden"></div>
+    </div>
+
+    <div id="result-card" class="card hidden">
+        <h2>Agent Decision Dashboard</h2>
+        <div id="escalation-badge" class="badge"></div>
+        <div class="intent">🧠 Detected Intent: <span id="intent-text" style="color: #2563eb;"></span></div>
+        <p><strong>Decision Reason:</strong> <span id="reason-text"></span></p>
+        <h3>💬 Grounded Reply Draft:</h3>
+        <div class="reply-box" id="reply-text"></div>
+    </div>
+
+    <script>
+        async function processTweet() {
+            const tweet = document.getElementById('tweet').value.trim();
+            if (!tweet) return alert("Please enter a customer tweet to test.");
+
+            const loading = document.getElementById('loading');
+            const resultCard = document.getElementById('result-card');
+            const errorBox = document.getElementById('error-box');
+
+            loading.classList.remove('hidden');
+            resultCard.classList.add('hidden');
+            errorBox.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tweet: tweet })
+                });
+
+                const data = await response.json();
+                loading.classList.add('hidden');
+
+                if (!response.ok || data.error) {
+                    errorBox.innerText = "⚠️ Error: " + (data.error || "Server returned an error");
+                    errorBox.classList.remove('hidden');
+                    return;
+                }
+
+                resultCard.classList.remove('hidden');
+                document.getElementById('intent-text').innerText = data.intent;
+                document.getElementById('reason-text').innerText = data.escalation_reason;
+                document.getElementById('reply-text').innerText = data.draft_reply;
+
+                const badge = document.getElementById('escalation-badge');
+                if (data.escalate) {
+                    badge.innerText = "🚨 ESCALATION REQUIRED (Route to Human)";
+                    badge.className = "badge escalate-true";
+                } else {
+                    badge.innerText = "✅ AUTO-HANDLE APPROVED (Bot can reply)";
+                    badge.className = "badge escalate-false";
+                }
+            } catch (err) {
+                loading.classList.add('hidden');
+                errorBox.innerText = "⚠️ Connection error: Is 'python app.py' running in your terminal?";
+                errorBox.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
