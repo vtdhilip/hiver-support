@@ -3,6 +3,10 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
 [![Model](https://img.shields.io/badge/LLM-Gemini%203.5%20Flash%20Lite-orange.svg)](https://aistudio.google.com/)
 [![Framework](https://img.shields.io/badge/Web-Flask-green.svg)](https://flask.palletsprojects.com/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-brightgreen.svg)](https://hiver-support.onrender.com)
+
+> 🚀 **Live Interactive Demo:** [https://hiver-support.onrender.com](https://hiver-support.onrender.com)
+> *(Test incoming customer tweets, inspect real-time intent classification, and view escalation decisions live)*
 
 An evaluation-first AI support agent for **`@AmazonHelp` on Twitter** built for the **Hiver SDE Intern Take-Home Assignment**.
 
