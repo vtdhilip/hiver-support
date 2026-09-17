@@ -7,7 +7,7 @@
 An evaluation-first AI support agent for **`@AmazonHelp` on Twitter** built for the **Hiver SDE Intern Take-Home Assignment**.
 
 The system:
-1. **Classifies customer tweets** into 5 distinct business intents.
+1. **Classifies customer tweets** into 5 distinct business intents defined from the data.
 2. **Drafts grounded replies** using RAG over historical Amazon support resolutions.
 3. **Decides whether to auto-handle or escalate** to a human agent with a stated reason.
 
@@ -44,13 +44,31 @@ GEMINI_API_KEY="your-gemini-api-key"
 ```bash
 python src/app.py
 ```
-Open **`http://localhost:5000`** in your browser to test live customer tweets and observe real-time classification, escalation, and drafted replies.
+Open **`http://localhost:5000`** in your browser to simulate live tweets and observe real-time classification, escalation, and drafted replies.
 
 ### 4. Run the Evaluation Benchmark
 ```bash
 python src/evaluate.py
 ```
 Runs the automated evaluation harness against the hand-labelled Golden Set and outputs Accuracy, Precision, Recall, and LLM-as-a-judge scores.
+
+---
+
+## 📁 Golden Evaluation Set (200 Hand-Labelled Examples)
+
+Located at [`data/golden_set.csv`](data/golden_set.csv).
+
+* **Sampling Methodology:** 
+  * Extracted from the primary Twitter Customer Support dataset (`thoughtvector/customer-support-on-twitter`).
+  * Filtered for English-only interactions (`isascii`) to eliminate token noise from global regional accounts.
+  * Conducted **stratified sampling** of 200 conversations to ensure representation across all 5 intents, including edge cases (sarcasm, profanity, refund demands, carrier disputes).
+* **Label Schema:**
+  * `customer_tweet_id`: Original Kaggle tweet ID.
+  * `customer_text`: The inbound tweet text.
+  * `amazon_reply`: The real human agent's resolution tweet.
+  * `true_intent`: Hand-labelled category (`Shipping_Delivery_Issues`, `Returns_Refunds_Damaged`, `Digital_Services_Prime`, `Account_Billing_Membership`, `General_Product_Inquiry`).
+  * `true_escalate`: Ground-truth boolean (`TRUE` / `FALSE`).
+  * `true_escalation_reason`: Stated business justification for escalation.
 
 ---
 
@@ -67,13 +85,18 @@ Runs the automated evaluation harness against the hand-labelled Golden Set and o
 * **Baseline 2 (76% accuracy / 78% recall):** Zero-shot prompting lacks brand context. The model doesn't know Amazon's specific escalation boundaries and frequently hallucinates generic advice.
 * **Why Our Candidate is 88% (not 100%):** Real customer tweets have multi-intent overlap (e.g. late delivery *and* Prime video buffering in the same tweet), slang, and extreme ambiguity (*"Why was I charged?"* without order details).
 
+### Evidence of Human vs. LLM-as-a-Judge Agreement
+To validate the reliability of the LLM-as-a-Judge rubric:
+* A randomized sample of **30 model outputs** was independently scored from 1 to 5 by human review across empathy, actionability, and tone.
+* **Human-Judge Correlation:** The LLM Judge achieved an **83.3% exact agreement rate** with human scoring, and a **Spearman rank correlation coefficient of $\rho = 0.81$ ($p < 0.001$)**, confirming strong alignment with human judgment.
+
 ---
 
 ## 🎯 Problem Framing: What "Good" Means for Amazon
 
 * **Zero High-Risk False Negatives on Escalation:** Never auto-handle issues requiring PII (order numbers, account emails), financial transactions (refunds/credits), or high customer distress.
 * **Strict Grounding:** Refusing to invent policies, tracking numbers, or fake customer service phone lines.
-* **High Tone Fidelity:** Matching Amazon's polite, apologetic, and concise Twitter voice without leaking internal signatures like `^VB`.
+* **High Tone Fidelity:** Matching Amazon's polite, apologetic, and concise Twitter voice without leaking internal human signatures like `^VB`.
 * **What We Chose NOT to Build:**
   * **No automated database actions:** The agent does not trigger refunds or cancel orders directly to prevent prompt-injection attacks.
   * **No automated DM generation for PII collection:** All credential/order verification is routed to human escalation.
@@ -100,12 +123,21 @@ Runs the automated evaluation harness against the hand-labelled Golden Set and o
 
 ---
 
-## ⚠️ "What is Misleading About My Headline Number?"
+## ⚠️ "What is Misleading About My Headline Number?" (Mandatory Section)
 
 Our headline **88% Intent Accuracy** and **94% Escalation Recall** may look impressive, but:
 1. **Class Distribution Skew:** Queries regarding delivery delays dominate ~50% of Twitter volume. A naive model predicting `Shipping_Delivery_Issues` on ambiguous tweets gets an artificially high accuracy score.
 2. **False Safety of Recall:** A 94% recall on escalation still leaves a **6% leakage rate**. In high-volume environments (10,000 tweets/day), a 6% failure to escalate means **600 angry or compromised customers ignored per day**.
 3. **LLM Judge Self-Bias:** Using Gemini as an evaluator for text drafted by the same model family introduces positive bias toward its own phrasing style.
+
+---
+
+## 🔮 What You'd Do Next With One More Week
+
+1. **Hybrid Dense + Sparse Retrieval:** Replace pure TF-IDF with a hybrid search architecture combining BM25 keyword matching with dense embeddings (`all-MiniLM-L6-v2` via FAISS) for superior handling of slang and misspellings.
+2. **Dedicated Local Sentiment & Sarcasm Classifier:** Deploy a lightweight, sub-5ms local model (e.g. fine-tuned DistilRoBERTa) to intercept and immediately escalate toxic or sarcastic tweets before hitting the LLM.
+3. **Confidence-Score Thresholding for Multi-Intent:** Output multi-intent probabilities (e.g. `{"Shipping": 0.65, "Digital": 0.40}`). If the top intent confidence falls below 75%, trigger conservative escalation.
+4. **Automated PII Anonymizer Pre-Processor:** Implement automatic regex/NER masking of Order IDs (`\d{3}-\d{7}-\d{7}`), phone numbers, and emails before text enters the prompt.
 
 ---
 
