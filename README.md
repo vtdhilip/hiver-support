@@ -44,16 +44,22 @@ Add your free Google Gemini API key to `.env`:
 GEMINI_API_KEY="your-gemini-api-key"
 ```
 
-### 3. Run the Interactive Web Dashboard
-```bash
-python src/app.py
-```
-Open **`http://localhost:5000`** in your browser to simulate live tweets and observe real-time classification, escalation, and drafted replies.
+### 3. Unified Execution CLI (Choose your mode)
+The repository includes a single unified entry point (`run.py`) to test queries, run benchmarks, or launch the web dashboard:
 
-### 4. Run the Evaluation Benchmark
-```bash
-python src/evaluate.py
-```
+* **Single Query CLI Inference:**
+  ```bash
+  python run.py --query "My package says delivered 3 hours ago but my porch is empty!"
+  ```
+* **Launch Interactive Web Dashboard:**
+  ```bash
+  python run.py --serve
+  ```
+  *(Then open http://localhost:5000 in your browser)*
+* **Run Automated Evaluation Benchmark (200 Golden Set Samples):**
+  ```bash
+  python run.py --eval
+  ```
 Runs the automated evaluation harness against the hand-labelled Golden Set and outputs Accuracy, Precision, Recall, and LLM-as-a-judge scores.
 
 ---
